@@ -1,0 +1,19 @@
+meta {
+  name: upload image
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/api/secretnotes/notes/{{phrase}}/image
+  body: none
+  auth: none
+}
+
+body:multipart-form {
+  image: @file({{imagePath}})
+}
+
+settings {
+  encodeUrl: true
+}

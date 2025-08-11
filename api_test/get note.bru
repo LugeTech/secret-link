@@ -1,0 +1,15 @@
+meta {
+  name: get note
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/secretnotes/notes/{{phrase}}
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+}

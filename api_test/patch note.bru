@@ -1,0 +1,21 @@
+meta {
+  name: patch note
+  type: http
+  seq: 4
+}
+
+patch {
+  url: {{baseUrl}}/api/secretnotes/notes/{{phrase}}
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "message": "Your Test message goes here"
+  }
+}
+
+settings {
+  encodeUrl: true
+}
