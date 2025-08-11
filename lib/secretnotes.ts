@@ -25,12 +25,15 @@ async function handleJson<T>(res: Response): Promise<T> {
 export async function health(): Promise<{ message: string; version: string }>
 {
   const res = await fetch(endpoints.health());
-  return handleJson(res);
+  const data = await handleJson<{ message: string; version: string }>(res);
+  console.log('[API] health()', data);
+  return data;
 }
 
 export async function getNote(phrase: string): Promise<Note> {
   const res = await fetch(endpoints.note(phrase));
-  return handleJson<Note>(res);
+  const data = await handleJson<Note>(res);
+  return data;
 }
 
 export async function updateNote(phrase: string, message: string): Promise<Note> {
@@ -39,12 +42,16 @@ export async function updateNote(phrase: string, message: string): Promise<Note>
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ message }),
   });
-  return handleJson<Note>(res);
+  const data = await handleJson<Note>(res);
+  console.log('[API] updateNote()', { phraseLength: phrase.length, data });
+  return data;
 }
 
 export async function deleteImage(phrase: string): Promise<{ message: string }>{
   const res = await fetch(endpoints.noteImage(phrase), { method: 'DELETE' });
-  return handleJson(res);
+  const data = await handleJson<{ message: string }>(res);
+  console.log('[API] deleteImage()', { phraseLength: phrase.length, data });
+  return data;
 }
 
 export async function getImage(phrase: string): Promise<{ dataUrl: string; contentType: string }>{
@@ -53,6 +60,7 @@ export async function getImage(phrase: string): Promise<{ dataUrl: string; conte
   const contentType = res.headers.get('content-type') || 'application/octet-stream';
   const buf = await res.arrayBuffer();
   const base64 = arrayBufferToBase64(buf);
+  console.log('[API] getImage()', { phraseLength: phrase.length, contentType, bytes: buf.byteLength, base64Length: base64.length });
   return { dataUrl: `data:${contentType};base64,${base64}`, contentType };
 }
 
@@ -67,7 +75,9 @@ export async function uploadImageFromUrl(phrase: string, imageUrl: string): Prom
   form.append('image', blob as any, nameGuess);
 
   const res = await fetch(endpoints.noteImage(phrase), { method: 'POST', body: form });
-  return handleJson(res);
+  const info = await handleJson<{ id: string; fileName: string; contentType: string; created: string }>(res);
+  console.log('[API] uploadImageFromUrl()', { phraseLength: phrase.length, imageUrl, uploaded: info });
+  return info;
 }
 
 function arrayBufferToBase64(buffer: ArrayBuffer): string {

@@ -11,7 +11,7 @@ export default function NoteScreen() {
   const [imageDataUrl, setImageDataUrl] = useState<string | null>(null);
   const [imageUrlInput, setImageUrlInput] = useState('');
 
-  const valid = useMemo(() => phrase.length >= 32, [phrase]);
+  const valid = useMemo(() => phrase.length >= 3, [phrase]);
 
   const withLoad = useCallback(async <T,>(key: string, fn: () => Promise<T>) => {
     try {
@@ -30,7 +30,7 @@ export default function NoteScreen() {
   });
 
   const onLoad = () => withLoad('load', async () => {
-    if (!valid) return Alert.alert('Invalid', 'Passphrase must be at least 32 characters.');
+    if (!valid) return Alert.alert('Invalid', 'Passphrase must be at least 3 characters.');
     const n = await getNote(phrase);
     setNote(n);
     setMessage(n.message ?? '');
@@ -38,19 +38,19 @@ export default function NoteScreen() {
   });
 
   const onUpdate = () => withLoad('update', async () => {
-    if (!valid) return Alert.alert('Invalid', 'Passphrase must be at least 32 characters.');
+    if (!valid) return Alert.alert('Invalid', 'Passphrase must be at least 3 characters.');
     const updated = await updateNote(phrase, message);
     setNote(updated);
   });
 
   const onGetImage = () => withLoad('getImage', async () => {
-    if (!valid) return Alert.alert('Invalid', 'Passphrase must be at least 32 characters.');
+    if (!valid) return Alert.alert('Invalid', 'Passphrase must be at least 3 characters.');
     const res = await getImage(phrase);
     setImageDataUrl(res.dataUrl);
   });
 
   const onUploadImage = () => withLoad('uploadImage', async () => {
-    if (!valid) return Alert.alert('Invalid', 'Passphrase must be at least 32 characters.');
+    if (!valid) return Alert.alert('Invalid', 'Passphrase must be at least 3 characters.');
     if (!imageUrlInput) return Alert.alert('Missing', 'Enter a direct image URL to upload.');
     const info = await uploadImageFromUrl(phrase, imageUrlInput);
     Alert.alert('Uploaded', `${info.fileName} (${info.contentType})`);
@@ -61,7 +61,7 @@ export default function NoteScreen() {
   });
 
   const onDeleteImage = () => withLoad('deleteImage', async () => {
-    if (!valid) return Alert.alert('Invalid', 'Passphrase must be at least 32 characters.');
+    if (!valid) return Alert.alert('Invalid', 'Passphrase must be at least 3 characters.');
     await deleteImage(phrase);
     setImageDataUrl(null);
     const n = await getNote(phrase);
@@ -72,7 +72,7 @@ export default function NoteScreen() {
     <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
       <Text style={styles.title}>Secret Note</Text>
 
-      <Text style={styles.label}>Passphrase (32+ chars)</Text>
+      <Text style={styles.label}>Passphrase (3+ chars)</Text>
       <TextInput
         value={phrase}
         onChangeText={setPhrase}
