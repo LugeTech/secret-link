@@ -1,9 +1,9 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { Alert, Button, ScrollView, StyleSheet, Text, TextInput, View, ActivityIndicator } from 'react-native';
 import { Image } from 'expo-image';
-import { deleteImage, getImage, getNote, updateNote, uploadImageFromUrl, health, type Note } from '@/lib/secretnotes';
+import { deleteImage, getImage, getNote, getOrCreateNote, updateNote, uploadImageFromUrl, type Note } from '@/lib/secretnotes';
 
-export default function NoteScreen() {
+export default function IndexScreen() {
   const [phrase, setPhrase] = useState('');
   const [note, setNote] = useState<Note | null>(null);
   const [message, setMessage] = useState('');
@@ -24,14 +24,9 @@ export default function NoteScreen() {
     }
   }, []);
 
-  const onHealth = () => withLoad('health', async () => {
-    const res = await health();
-    Alert.alert('API', `${res.message} (v${res.version})`);
-  });
-
   const onLoad = () => withLoad('load', async () => {
     if (!valid) return Alert.alert('Invalid', 'Passphrase must be at least 3 characters.');
-    const n = await getNote(phrase);
+    const n = await getOrCreateNote(phrase);
     setNote(n);
     setMessage(n.message ?? '');
     setImageDataUrl(null);
@@ -70,7 +65,7 @@ export default function NoteScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-      <Text style={styles.title}>Secret Note</Text>
+      <Text style={styles.title}>Secure Notes</Text>
 
       <Text style={styles.label}>Passphrase (3+ chars)</Text>
       <TextInput
@@ -85,7 +80,6 @@ export default function NoteScreen() {
       />
 
       <View style={styles.row}>
-        <View style={styles.button}><Button title="Health" onPress={onHealth} /></View>
         <View style={styles.button}><Button title="Load Note" onPress={onLoad} /></View>
       </View>
 
