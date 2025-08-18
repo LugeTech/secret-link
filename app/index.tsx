@@ -1,7 +1,7 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState, useEffect, useRef } from 'react';
 import { Alert, Button, ScrollView, StyleSheet, Text, TextInput, View, ActivityIndicator } from 'react-native';
 import { Image } from 'expo-image';
-import { deleteImage, getImage, getNote, getOrCreateNote, updateNote, uploadImageFromUrl, type Note } from '@/lib/secretnotes';
+import { deleteImage, getImage, getNote, getOrCreateNote, saveNote, uploadImageFromUrl, type Note } from '@/lib/secretnotes';
 
 export default function IndexScreen() {
   const [phrase, setPhrase] = useState('');
@@ -32,11 +32,6 @@ export default function IndexScreen() {
     setImageDataUrl(null);
   });
 
-  const onUpdate = () => withLoad('update', async () => {
-    if (!valid) return Alert.alert('Invalid', 'Passphrase must be at least 3 characters.');
-    const updated = await updateNote(phrase, message);
-    setNote(updated);
-  });
 
   const onGetImage = () => withLoad('getImage', async () => {
     if (!valid) return Alert.alert('Invalid', 'Passphrase must be at least 3 characters.');
@@ -63,6 +58,27 @@ export default function IndexScreen() {
     setNote(n);
   });
 
+  // Debounced autosave when message changes
+  const saveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!note) return;
+    if (!valid) return;
+    if (message === note.message) return;
+
+    if (saveTimeout.current) clearTimeout(saveTimeout.current);
+
+    saveTimeout.current = setTimeout(() => {
+      withLoad('autosave', async () => {
+        const updated = await saveNote(phrase, message);
+        setNote(updated);
+      });
+    }, 2000);
+
+    return () => {
+      if (saveTimeout.current) clearTimeout(saveTimeout.current);
+    };
+  }, [message, note, valid]);
+
   return (
     <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
       <Text style={styles.title}>Secure Notes</Text>
@@ -88,18 +104,23 @@ export default function IndexScreen() {
       )}
 
       {note && (
-        <View style={styles.card}>
-          <Text style={styles.label}>Message</Text>
-          <TextInput
-            value={message}
-            onChangeText={setMessage}
-            placeholder="Type your secret message"
-            placeholderTextColor="#999"
-            style={[styles.input, styles.textarea]}
-            multiline
-          />
-          <View style={styles.row}>
-            <View style={styles.button}><Button title="Update Note" onPress={onUpdate} /></View>
+        <View>
+          <View style={styles.card}>
+            <Text style={styles.label}>Message</Text>
+            <TextInput
+              value={message}
+              onChangeText={setMessage}
+              placeholder="Type your secret message"
+              placeholderTextColor="#999"
+              style={[styles.input, styles.textarea]}
+              multiline
+            />
+            <View style={styles.saveStatus}>
+              {loading.key === 'autosave' && <ActivityIndicator size="small" style={{ marginRight: 6 }} />}
+              <Text style={styles.helper}>
+                {loading.key === 'autosave' ? 'Saving...' : 'Changes are saved automatically.'}
+              </Text>
+            </View>
           </View>
 
           <View style={styles.divider} />
@@ -111,7 +132,6 @@ export default function IndexScreen() {
           ) : (
             <Text style={styles.helper}>No image uploaded yet.</Text>
           )}
-
           <View style={styles.row}>
             <View style={styles.button}><Button title="Get Image" onPress={onGetImage} /></View>
             <View style={styles.button}><Button title="Delete Image" color="#c00" onPress={onDeleteImage} /></View>
@@ -158,5 +178,6 @@ const styles = StyleSheet.create({
   divider: { height: 1, backgroundColor: '#e5e5e5', marginVertical: 12 },
   helper: { color: '#666', fontSize: 12 },
   image: { width: '100%', height: 200, borderRadius: 8, backgroundColor: '#eee' },
-  loading: { marginTop: 8 }
+  loading: { marginTop: 8 },
+  saveStatus: { flexDirection: 'row', alignItems: 'center', marginTop: 4 }
 });

@@ -76,10 +76,10 @@ export async function getOrCreateNote(phrase: string): Promise<Note> {
   } catch (e: any) {
     console.warn('[API] getOrCreateNote() fetch failed (likely missing note):', e?.message ?? String(e));
     // Attempt to initialize the note on any fetch failure.
-    // Prefer PATCH upsert (observed to succeed), fallback to POST.
+    // Prefer PUT upsert (recommended by backend), fallback to POST.
     let createdOrUpdated: Note | null = null;
     try {
-      createdOrUpdated = await updateNote(key, DEFAULT_INIT_MESSAGE);
+      createdOrUpdated = await saveNote(key, DEFAULT_INIT_MESSAGE);
     } catch (patchErr: any) {
       console.warn('[API] getOrCreateNote() PATCH upsert failed, trying POST create...', patchErr?.message ?? String(patchErr));
       try {
@@ -119,6 +119,26 @@ export async function createNote(phrase: string, message: string): Promise<Note>
   }
 }
 
+// Upsert: create or update note in a single call (preferred by backend guidance)
+export async function saveNote(phrase: string, message: string): Promise<Note> {
+  const key = normalizePhrase(phrase);
+  const url = endpoints.note(key);
+
+  try {
+    const res = await fetch(url, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({ message }),
+    });
+    const data = await handleJson<Note>(res);
+    return data;
+  } catch (error) {
+    console.error('[API] saveNote() error:', error);
+    throw error;
+  }
+}
+
+// Only use PATCH if you specifically need 404 behaviour for non-existent notes
 export async function updateNote(phrase: string, message: string): Promise<Note> {
   const key = normalizePhrase(phrase);
   const url = endpoints.note(key);

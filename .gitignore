@@ -41,4 +41,3 @@ api_test/get_note.bru
 api_test/environments/local.bru
 api_test/environments/env.bru
 .env
-FRONTEND_GUIDE.md
